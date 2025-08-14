@@ -1,0 +1,45 @@
+<!doctype html>
+<html><head><meta charset='utf-8'><title>Reflex Duel — GT</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;max-width:760px;margin:20px auto} .card{border:1px solid #ddd;padding:12px;border-radius:8px;margin:12px 0} #arena{height:200px;border:2px dashed #aaa;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:32px}</style>
+</head><body>
+<h1>Reflex Duel ⚡</h1>
+<div class="card">
+  <b>Connect</b><br>
+  API: <input id="api" style="width:360px" value="http://localhost:3000">
+  &nbsp;|&nbsp; Your Address: <input id="me" style="width:360px" placeholder="0x...">
+</div>
+<div class="card">
+  <b>Find Match</b><br>
+  Stake GT: <input id="stake" type="number" min="1" value="1">
+  <button id="find">Queue</button>
+  <pre id="log"></pre>
+</div>
+<div class="card">
+  <b>Stake On-Chain</b><br>
+  MatchId: <code id="mid"></code><br>
+  Opponent: <code id="opp"></code><br>
+  <button id="ready">I'm Ready</button>
+  <div id="status"></div>
+</div>
+<div class="card" id="arena">Waiting…</div>
+<div class="card">
+  <b>Report Result</b><br>
+  <button id="iWon">I Won</button>
+  <pre id="out"></pre>
+</div>
+<script>
+const $=id=>document.getElementById(id); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let ticket=null, startAt=null, matchId=null, opponent=null;
+$("find").onclick = async ()=>{
+  const api=$("api").value, me=$("me").value, stake=BigInt(($("stake").value||"1"))*10n**18n;
+  const r=await fetch(api+"/queue",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({player:me,stake:stake.toString()})}); const j=await r.json(); ticket=j.ticket; $("log").textContent="ticket="+ticket;
+  for(;;){ const s=await fetch(api+"/state?ticket="+ticket).then(r=>r.json()); if(s.matchIdBytes32){$("mid").textContent=s.matchIdBytes32; $("opp").textContent=s.opponent; matchId=s.matchIdBytes32; opponent=s.opponent; break;} await sleep(1000); }
+};
+$("ready").onclick = async ()=>{
+  const api=$("api").value; await fetch(api+"/ready",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket})});
+  for(;;){ const s=await fetch(api+"/state?ticket="+ticket).then(r=>r.json()); if(s.startAt){ startAt=s.startAt; $("status").textContent="Starting at "+startAt; const wait=Math.max(0,startAt*1000-Date.now()); setTimeout(startGame, wait); break;} await sleep(1000); }
+};
+function startGame(){ const arena=$("arena"); arena.textContent="Get Ready…"; setTimeout(()=>{ arena.textContent="GO! Press SPACE"; let done=false; window.onkeydown=(e)=>{ if(e.code==="Space" && !done){ done=true; arena.textContent="You pressed! If you were faster, click 'I Won'"; } }; }, 1000+Math.random()*2000); }
+$("iWon").onclick = async ()=>{ const api=$("api").value, me=$("me").value; const r=await fetch(api+"/submit-score",{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket,winner:me})}); $("out").textContent=JSON.stringify(await r.json(),null,2); };
+</script>
+</body></html>

@@ -1,0 +1,28 @@
+{
+  "name": "game-platform-integration",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run --network localhost deploy/00_deploy.js",
+    "deploy:sepolia": "hardhat run --network sepolia deploy/00_deploy.js",
+    "deploy:mumbai": "hardhat run --network polygonMumbai deploy/00_deploy.js",
+    "start:api": "node api/index.js",
+    "leaderboard": "node tools/leaderboard.js",
+    "start:web": "npx http-server web-game -p 8080"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.10.0",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "hardhat": "^2.22.10",
+    "http-server": "^14.1.1"
+  }
+}
